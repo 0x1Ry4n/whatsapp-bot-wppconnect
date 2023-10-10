@@ -1,7 +1,5 @@
 const client = require("@wppconnect-team/wppconnect");
 
-// criar sessão implementado
-
 async function createSession() {
     return client.create({
         session: "teste",

@@ -3,11 +3,11 @@ const helmet = require('helmet');
 const bodyParser = require('body-parser');
 const sheetsRoute = require("./controllers/sheetsController");
 const http = require("http");
+const port = require("./config/port")
 require("dotenv").config()
 
 const app = express()
 const server = http.createServer(app);
-const port = process.env.SERVER_PORT ?? 3000
 
 app.use(helmet())
 app.use(bodyParser.urlencoded({ extended: true }))

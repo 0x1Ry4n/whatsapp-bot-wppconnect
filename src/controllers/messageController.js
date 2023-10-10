@@ -1,6 +1,7 @@
 const { createSession } = require("../config/client");
 const { createClientMessage, createProfessionalMessage } = require("../helpers/createMessages");
-const phoneFormatter = require("../helpers/formatPhoneNumber");
+const axios = require("axios");
+const port = require("../config/port")
 
 const botClient = createSession()
 
@@ -19,80 +20,89 @@ async function sendMessage(client, target, message) {
     }
 }
 
-// A questão principal é: Como ligar o google sheets com o wppconnect?
-
-async function sender() {
+async function sender(data) {
     try {
-        const errors = validationResult(req);
-
-        if (!errors.isEmpty()) {
-            return res.status(422).json({
-                status: false,
-                message: errors.mapped(),
-            });
-        }
-
         const client = await botClient;
 
-        // criar as mensagens personalizadas do paciente e médico a partir da linha na página do google sheets
-        const clientMessages = createClientMessage() // passar o body da planilha aqui
-        const professionalMessages = createProfessionalMessage() // passar o body da planilha aqui
+        const clientMessages = createClientMessage(data)
+        const professionalMessages = createProfessionalMessage(data)
 
-        const clientFormattedPhone = phoneFormatter() // passar o número de telefone do cliente para formatar '@c.us'
-        const professionalFormattedPhone = phoneFormatter() // passar o número de telefone do profissional para formatar '@c.us'
+        const clientFormattedPhone = data?.telefoneCliente
+        const professionalFormattedPhone = data?.telefoneProfissional
 
-        const responseClient = await sendMessage(client, clientFormattedPhone, clientMessages["0"]); // enviar mensagem para o paciente avisando que o agendamento chegou
+        const responseClient = await sendMessage(client, clientFormattedPhone, clientMessages["0"]);
 
         if (!responseClient) {
-            return res.status(500).json({
-                status: false,
-                response: "Falha ao enviar a mensagem para o cliente!",
-            });
+            return false;
         }
 
         const responseProfessional = await sendMessage(client, professionalFormattedPhone, professionalMessages["0"]); // enviar mensagem para o doutor perguntando se confirma o agendamento
 
         if (!responseProfessional) {
-            return res.status(500).json({
-                status: false,
-                response: "Falha ao enviar a mensagem para o profissional!",
-            });
+            return false;
         }
 
         console.log(responseClient, responseProfessional);
 
-        res.status(200).json({
-            status: true,
-            response: "Mensagem enviada com sucesso!",
-        });
-
+        return true;
     } catch (error) {
-        next(error);
+        console.log("Erro ao enviar as mensagens: ", error);
+        return false;
     }
 }
-
-// ouvir a resposta do doutor para a confirmação e passar as mensagens personalizadas como feito no sender
 
 async function messageListener() {
     const client = await botClient;
 
-    const listener = client.onAnyMessage(async (message) => {
+    client.onAnyMessage(async (message) => {
         const isMsgValid = /[1|2]/.test(message.body);
         const isContactMsg = message.isGroupMsg === false;
 
+        console.log(message)
+
+        if (!isContactMsg) {
+            return;
+        }
+
+        const params = {
+            range: "Página1",
+            column: "telefoneProfissional",
+            value: message.from
+        }
+
+        console.log("Quem mandou mensagem: ", message.from)
+
+        const response = await axios.get(`http://localhost:${port}/api/sheets/isKnowedNumber`, {
+            params
+        })
+
+        console.log("Resposta do axios: ", response.data);
+
+        if (!response.data?.result) {
+            sendMessage(client, message.from, "Número desconhecido!");
+            return
+        }
+
+        const data = response.data?.data[0]
+
+        const clientMessages = createClientMessage(data)
+        const professionalMessages = createProfessionalMessage(data) // passar o body da planilha aqui
+
+        const clientFormattedPhone = data?.telefoneCliente
+        const professionalFormattedPhone = data?.telefoneProfissional
+
         if (isMsgValid && isContactMsg) {
             if (message.body.toString() === "1") {
-                sendMessage(client, telefoneProfissional, messagesProfissional["1"]);
-                sendMessage(client, telefoneCliente, messagesCliente["1"]);
-                sendMessage(client, telefoneCliente, messagesCliente["3"]);
-            } else {
-                sendMessage(client, telefoneCliente, messagesCliente["2"]);
-                sendMessage(client, telefoneCliente, messagesCliente["3"]);
+                sendMessage(client, professionalFormattedPhone, professionalMessages["1"]);
+                sendMessage(client, clientFormattedPhone, clientMessages["1"]);
+                sendMessage(client, clientFormattedPhone, clientMessages["3"]);
+            } else if (message.body.toString() === "2") {
+                sendMessage(client, clientFormattedPhone, clientMessages["2"]);
+                sendMessage(client, clientFormattedPhone, clientMessages["3"]);
             }
-
-            listener.dispose();
+            return
         }
     });
 }
 
-module.exports = { sender, messageListener } // preciso utilizar essas funções
+module.exports = { sender, messageListener } 
