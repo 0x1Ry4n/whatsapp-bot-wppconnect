@@ -1,0 +1,211 @@
+{
+	"info": {
+		"_postman_id": "866cec2c-e2d3-4767-a283-4b5f9605a9be",
+		"name": "Webhook Narciso",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28838153"
+	},
+	"item": [
+		{
+			"name": "Sheets",
+			"item": [
+				{
+					"name": "Sheets get Rows",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/api/sheets/listSchedulings?range=Página1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"sheets",
+								"listSchedulings"
+							],
+							"query": [
+								{
+									"key": "range",
+									"value": "Página1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sheets metadata",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "telefoneProfissional",
+									"value": "5517996492678",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "nomeCliente",
+									"value": "Ryan Lucas",
+									"type": "text"
+								},
+								{
+									"key": "tipoConsulta",
+									"value": "Cardiologista",
+									"type": "text"
+								},
+								{
+									"key": "dataAgendamento",
+									"value": "2023-09-26T13:07Z",
+									"type": "text"
+								},
+								{
+									"key": "nomeProfissional",
+									"value": "Anderson Nascimento",
+									"type": "text"
+								},
+								{
+									"key": "telefoneCliente",
+									"value": "5517996492678",
+									"type": "text"
+								},
+								{
+									"key": "telefoneProfissional",
+									"value": "5517996492678",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/sheets/metadata",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"sheets",
+								"metadata"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sheets add Row",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"values\": [\r\n        [\r\n            \"Teste\", \r\n            \"Maria\", \r\n            \"5517996492678\", \r\n            \"5517996492678\", \r\n            \"Cardiologista\", \r\n            \"2023-12-21+14:40Z\"\r\n        ]\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/sheets/addScheduling?range=Página1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"sheets",
+								"addScheduling"
+							],
+							"query": [
+								{
+									"key": "range",
+									"value": "Página1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Rows",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/api/sheets/isKnowedNumber?range=Página1&column=nomeCliente&value=aa",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"sheets",
+								"isKnowedNumber"
+							],
+							"query": [
+								{
+									"key": "range",
+									"value": "Página1"
+								},
+								{
+									"key": "column",
+									"value": "nomeCliente"
+								},
+								{
+									"key": "value",
+									"value": "aa"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Messages",
+			"item": [
+				{
+					"name": "Send Messages",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/messages/sendmessage",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"messages",
+								"sendmessage"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
