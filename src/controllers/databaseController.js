@@ -1,6 +1,7 @@
 const apiRateLimit = require("../middlewares/rateLimit");
 const { validationResult, body } = require("express-validator")
 const { patientSender } = require("./messageController")
+const phoneFormatter = require("../helpers/formatPhoneNumber");
 const prisma = require("../config/mongoDb");
 const router = require("express").Router();
 
@@ -38,8 +39,8 @@ router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res,
             data: {
                 nomeCliente: nomeCliente,
                 nomeProfissional: nomeProfissional,
-                telefoneCliente: telefoneCliente,
-                telefoneProfissional: telefoneProfissional,
+                telefoneCliente: phoneFormatter(telefoneCliente),
+                telefoneProfissional: phoneFormatter(telefoneProfissional),
                 tipoConsulta: tipoConsulta,
                 dataAgendamento: dataAgendamento,
                 agendado: agendado
@@ -49,9 +50,8 @@ router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res,
         console.log(scheduling);
 
         if (patientSender(scheduling)) {
-            res
-                .status(201)
-                .json(scheduling)
+            res.status(201).json(scheduling)
+            return
         }
     } catch (error) {
         console.log(error)
@@ -78,12 +78,12 @@ router.get("/listSchedulings", apiRateLimit, async (req, res, next) => {
         })
 
         if (!schedulings.length > 0) {
-            res.status(400).json({
+            res.status(204).json({
                 msg: "Unsucessful scheduling fetch!"
             })
         }
 
-        res.status(201).json(schedulings);
+        return res.status(201).json(schedulings);
     } catch (error) {
         res.status(400).json({
             msg: "Unsucessful scheduling fetch!"
@@ -115,14 +115,13 @@ router.get("/filterData", apiRateLimit, async (req, res, next) => {
         console.log(schedulings)
 
         if (!schedulings.length > 0) {
-            res.status(400).json({
-                result: false,
-                data: null
+            res.status(204).json({
+                msg: "Unsucessful scheduling filtering!"
             })
+            return;
         }
 
-        res.status(201).json({
-            result: true,
+        return res.status(201).json({
             data: schedulings
         });
     } catch (error) {
@@ -157,10 +156,10 @@ router.post("/updateScheduling", apiRateLimit, async (req, res) => {
 
         console.log(scheduling);
 
-        res.status(201).json(scheduling)
+        return res.status(201).json(scheduling)
     } catch (error) {
         console.log(error);
-        res.status(400).json({
+        return res.status(400).json({
             msg: "Unsucessful scheduling update"
         })
         next()

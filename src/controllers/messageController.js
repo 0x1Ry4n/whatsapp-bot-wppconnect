@@ -1,5 +1,6 @@
 const { createSession } = require("../config/client");
 const { createClientMessage, createProfessionalMessage } = require("../helpers/createMessages");
+const phoneFormatter = require("../helpers/formatPhoneNumber");
 const axios = require("axios");
 const port = require("../config/port")
 
@@ -72,11 +73,6 @@ async function messageListener() {
 
         console.log("Resposta do axios: ", responseFiltered.data);
 
-        if (!responseFiltered.data?.data) {
-            sendMessage(client, message.from, "Número desconhecido!");
-            return
-        }
-
         const data = responseFiltered.data?.data[0]
 
         const clientMessages = createClientMessage(data)
@@ -94,8 +90,6 @@ async function messageListener() {
             }
             case "1": { // enviar confirmação
                 await sendMessage(client, professionalFormattedPhone, professionalMessages["1"]);
-
-                console.log(data.id)
 
                 const params = {
                     id: data.id,
