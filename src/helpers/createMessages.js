@@ -20,7 +20,9 @@ const createClientMessage = (body) => {
         `.split('\n').map(line => line.trim()).join('\n'),
         "3": `
         Verifique seu e-mail cadastrado para conferir se o profissional disponibilizou algum documento 
-        a ser preenchido previamente à data do seu agendamento.
+        a ser preenchido previamente à data do seu agendamento!
+        Caso precise conversar com o profissional:
+        Link do contato do profissional: ${body.telefoneProfissional}
         `.split('\n').map(line => line.trim()).join('\n')
     }
 
@@ -40,7 +42,12 @@ const createProfessionalMessage = (body) => {
         `.split('\n').map(line => line.trim()).join('\n'),
         "1": `
         Certo, o seu agendamento foi confirmado!
-        Estamos coletando informações com seu paciente...
+        Estamos coletando informações com seu paciente.
+        Caso precise combinar os detalhes do serviço com seu cliente:
+        Link do contato do paciente: ${body.telefoneCliente}
+
+        Para ver novos agendamentos
+        0️⃣ - Ver novos agendamentos
         `.split('\n').map(line => line.trim()).join('\n')
     }
 

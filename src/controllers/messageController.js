@@ -20,12 +20,12 @@ async function sendMessage(client, target, message) {
     }
 }
 
-async function sender(data) {
+async function patientSender(data) {
     try {
         const client = await botClient;
 
         const clientMessages = createClientMessage(data)
-        const professionalMessages = createProfessionalMessage(data)
+        const professionalMessages = createProfessionalMessage(data);
 
         const clientFormattedPhone = data?.telefoneCliente
         const professionalFormattedPhone = data?.telefoneProfissional
@@ -36,9 +36,9 @@ async function sender(data) {
             return false;
         }
 
-        const responseProfessional = await sendMessage(client, professionalFormattedPhone, professionalMessages["0"]); // enviar mensagem para o doutor perguntando se confirma o agendamento
+        const responseProfessional = await sendMessage(client, professionalFormattedPhone, professionalMessages["0"]);
 
-        if (!responseProfessional) {
+        if (!responseClient) {
             return false;
         }
 
@@ -55,54 +55,71 @@ async function messageListener() {
     const client = await botClient;
 
     client.onAnyMessage(async (message) => {
-        const isMsgValid = /[1|2]/.test(message.body);
+        const isMsgValid = /[0|1|2]/.test(message.body);
         const isContactMsg = message.isGroupMsg === false;
+        const isMsgToBot = message.to === process.env.BOT_PHONE_NUMBER
 
-        console.log(message)
-
-        if (!isContactMsg) {
-            return;
-        }
+        if (!isContactMsg || !isMsgValid || !isMsgToBot) return
 
         const params = {
-            range: "Página1",
-            column: "telefoneProfissional",
-            value: message.from
+            telefoneProfissional: message.from,
+            agendado: false
         }
 
-        console.log("Quem mandou mensagem: ", message.from)
-
-        const response = await axios.get(`http://localhost:${port}/api/sheets/isKnowedNumber`, {
+        const responseFiltered = await axios.get(`http://localhost:${port}/api/schedulings/filterData`, {
             params
         })
 
-        console.log("Resposta do axios: ", response.data);
+        console.log("Resposta do axios: ", responseFiltered.data);
 
-        if (!response.data?.result) {
+        if (!responseFiltered.data?.data) {
             sendMessage(client, message.from, "Número desconhecido!");
             return
         }
 
-        const data = response.data?.data[0]
+        const data = responseFiltered.data?.data[0]
 
         const clientMessages = createClientMessage(data)
-        const professionalMessages = createProfessionalMessage(data) // passar o body da planilha aqui
+        const professionalMessages = createProfessionalMessage(data)
 
         const clientFormattedPhone = data?.telefoneCliente
         const professionalFormattedPhone = data?.telefoneProfissional
 
-        if (isMsgValid && isContactMsg) {
-            if (message.body.toString() === "1") {
-                sendMessage(client, professionalFormattedPhone, professionalMessages["1"]);
-                sendMessage(client, clientFormattedPhone, clientMessages["1"]);
-                sendMessage(client, clientFormattedPhone, clientMessages["3"]);
-            } else if (message.body.toString() === "2") {
-                sendMessage(client, clientFormattedPhone, clientMessages["2"]);
-                sendMessage(client, clientFormattedPhone, clientMessages["3"]);
+        console.log("Quem mandou mensagem: ", message.from)
+
+        switch (message.body.toString()) { // enviar novo agendamento encontrado para o profissional
+            case "0": {
+                await sendMessage(client, professionalFormattedPhone, professionalMessages["0"]);
+                return
             }
-            return
+            case "1": { // enviar confirmação
+                await sendMessage(client, professionalFormattedPhone, professionalMessages["1"]);
+
+                console.log(data.id)
+
+                const params = {
+                    id: data.id,
+                    agendado: true
+                }
+
+                const response = await axios.post(`http://localhost:${port}/api/schedulings/updateScheduling`, {}, {
+                    params: params
+                })
+
+                console.log(response);
+
+                await sendMessage(client, clientFormattedPhone, clientMessages["1"]);
+                await sendMessage(client, clientFormattedPhone, clientMessages["3"]);
+
+                return
+            }
+            case "2": { // enviar rejeição
+                await sendMessage(client, clientFormattedPhone, clientMessages["2"]);
+                await sendMessage(client, clientFormattedPhone, clientMessages["3"]);
+                return
+            }
         }
     });
 }
 
-module.exports = { sender, messageListener } 
+module.exports = { patientSender, messageListener } 
