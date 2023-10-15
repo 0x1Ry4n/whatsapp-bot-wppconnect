@@ -1,6 +1,5 @@
 const { createSession } = require("../config/client");
 const { createClientMessage, createProfessionalMessage } = require("../helpers/createMessages");
-const phoneFormatter = require("../helpers/formatPhoneNumber");
 const axios = require("axios");
 const port = require("../config/port")
 
@@ -31,19 +30,14 @@ async function patientSender(data) {
         const clientFormattedPhone = data?.telefoneCliente
         const professionalFormattedPhone = data?.telefoneProfissional
 
-        const responseClient = await sendMessage(client, clientFormattedPhone, clientMessages["0"]);
+        const [responseClient, responseProfessional] = await Promise.all([
+            sendMessage(client, clientFormattedPhone, clientMessages["0"]),
+            sendMessage(client, professionalFormattedPhone, professionalMessages["0"])
+        ])
 
-        if (!responseClient) {
+        if (!responseClient || !responseProfessional) {
             return false;
         }
-
-        const responseProfessional = await sendMessage(client, professionalFormattedPhone, professionalMessages["0"]);
-
-        if (!responseClient) {
-            return false;
-        }
-
-        console.log(responseClient, responseProfessional);
 
         return true;
     } catch (error) {
@@ -67,9 +61,18 @@ async function messageListener() {
             agendado: false
         }
 
+
         const responseFiltered = await axios.get(`http://localhost:${port}/api/schedulings/filterData`, {
-            params
+            params,
+            headers: {
+                'Authorization': `${process.env.SECRET_TOKEN}`
+            }
         })
+
+        if (!responseFiltered.data) {
+            return
+        }
+
 
         console.log("Resposta do axios: ", responseFiltered.data);
 
@@ -83,12 +86,12 @@ async function messageListener() {
 
         console.log("Quem mandou mensagem: ", message.from)
 
-        switch (message.body.toString()) { // enviar novo agendamento encontrado para o profissional
+        switch (message.body.toString()) {
             case "0": {
                 await sendMessage(client, professionalFormattedPhone, professionalMessages["0"]);
                 return
             }
-            case "1": { // enviar confirmação
+            case "1": {
                 await sendMessage(client, professionalFormattedPhone, professionalMessages["1"]);
 
                 const params = {
@@ -97,19 +100,27 @@ async function messageListener() {
                 }
 
                 const response = await axios.post(`http://localhost:${port}/api/schedulings/updateScheduling`, {}, {
-                    params: params
+                    params: params,
+                    headers: {
+                        'Authorization': `${process.env.SECRET_TOKEN}`
+                    }
                 })
 
                 console.log(response);
 
-                await sendMessage(client, clientFormattedPhone, clientMessages["1"]);
-                await sendMessage(client, clientFormattedPhone, clientMessages["3"]);
+                await Promise.all([
+                    sendMessage(client, clientFormattedPhone, clientMessages["1"]),
+                    sendMessage(client, clientFormattedPhone, clientMessages["3"]),
+                ])
 
                 return
             }
-            case "2": { // enviar rejeição
-                await sendMessage(client, clientFormattedPhone, clientMessages["2"]);
-                await sendMessage(client, clientFormattedPhone, clientMessages["3"]);
+            case "2": {
+                await Promise.all([
+                    sendMessage(client, clientFormattedPhone, clientMessages["2"]),
+                    sendMessage(client, clientFormattedPhone, clientMessages["3"]),
+                ])
+
                 return
             }
         }

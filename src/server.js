@@ -14,7 +14,12 @@ const server = http.createServer(app);
 async function main() {
     app.use(helmet())
     app.use(bodyParser.urlencoded({ extended: true }))
+    app.use(bodyParser.json({ limit: '1mb' }))
     app.use(express.json())
+
+    app.use("/api/healthchecker", (req, res) => {
+        res.send("Hello!")
+    })
 
     app.use("/api/schedulings", sheetsRoute);
 
@@ -40,8 +45,8 @@ main()
         await prisma.$connect()
         await messageListener()
     })
-    .catch(async (e) => {
-        console.error(e)
+    .catch(async (error) => {
+        console.error(error)
         await prisma.$disconnect()
         process.exit(1)
     })

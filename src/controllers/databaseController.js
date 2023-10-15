@@ -1,25 +1,19 @@
 const apiRateLimit = require("../middlewares/rateLimit");
-const { validationResult, body } = require("express-validator")
+const checkAuth = require("../middlewares/checkAuth");
+const { validationResult } = require("express-validator")
+const { validateScheduling, validateUpdateScheduling } = require("../validators/validateReq");
 const { patientSender } = require("./messageController")
 const phoneFormatter = require("../helpers/formatPhoneNumber");
 const prisma = require("../config/mongoDb");
 const router = require("express").Router();
 
-const validateScheduling = [
-    body("nomeCliente").isString({ min: 2, max: 100 }).exists(),
-    body("nomeProfissional").isString({ min: 2, max: 100 }).exists(),
-    body("telefoneCliente").isString({ max: 16 }).exists(),
-    body("telefoneProfissional").isString({ max: 16 }).exists(),
-    body("tipoConsulta").isString({ max: 75 }).exists(),
-    body("dataAgendamento").isISO8601().exists(),
-    body("agendado").isBoolean().exists()
-]
 
 router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res, next) => {
     try {
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
+            console.log(errors);
             return res.status(422).json({
                 message: errors.mapped()
             })
@@ -31,9 +25,10 @@ router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res,
             telefoneCliente,
             telefoneProfissional,
             tipoConsulta,
-            dataAgendamento,
-            agendado
+            dataAgendamento
         } = req.body;
+
+        const dateFormatted = new Date(dataAgendamento)
 
         const scheduling = await prisma.agendamento.create({
             data: {
@@ -42,8 +37,8 @@ router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res,
                 telefoneCliente: phoneFormatter(telefoneCliente),
                 telefoneProfissional: phoneFormatter(telefoneProfissional),
                 tipoConsulta: tipoConsulta,
-                dataAgendamento: dataAgendamento,
-                agendado: agendado
+                dataAgendamento: dateFormatted.toISOString(),
+                agendado: false
             }
         })
 
@@ -55,14 +50,13 @@ router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res,
         }
     } catch (error) {
         console.log(error)
-        res.status(400).json({
+        return res.status(400).json({
             msg: "Unsucessful scheduling registration"
         })
-        next()
     }
 });
 
-router.get("/listSchedulings", apiRateLimit, async (req, res, next) => {
+router.get("/listSchedulings", checkAuth, apiRateLimit, async (req, res, next) => {
     try {
         const schedulings = await prisma.agendamento.findMany({
             select: {
@@ -79,21 +73,19 @@ router.get("/listSchedulings", apiRateLimit, async (req, res, next) => {
 
         if (!schedulings.length > 0) {
             res.status(204).json({
-                msg: "Unsucessful scheduling fetch!"
+                msg: "Response content is none"
             })
         }
 
         return res.status(201).json(schedulings);
     } catch (error) {
-        res.status(400).json({
+        return res.status(400).json({
             msg: "Unsucessful scheduling fetch!"
         })
-        next()
     }
 });
 
-router.get("/filterData", apiRateLimit, async (req, res, next) => {
-
+router.get("/filterData", checkAuth, apiRateLimit, async (req, res, next) => {
     try {
         const schedulings = await prisma.agendamento.findMany({
             where: {
@@ -116,9 +108,9 @@ router.get("/filterData", apiRateLimit, async (req, res, next) => {
 
         if (!schedulings.length > 0) {
             res.status(204).json({
-                msg: "Unsucessful scheduling filtering!"
+                msg: "Response content is none"
             })
-            return;
+            return
         }
 
         return res.status(201).json({
@@ -126,14 +118,13 @@ router.get("/filterData", apiRateLimit, async (req, res, next) => {
         });
     } catch (error) {
         console.log(error)
-        res.status(400).json({
+        return res.status(400).json({
             msg: "Error fetching scheduling"
         });
-        next()
     }
 });
 
-router.post("/updateScheduling", apiRateLimit, async (req, res) => {
+router.post("/updateScheduling", checkAuth, apiRateLimit, validateUpdateScheduling, async (req, res, next) => {
     try {
         const errors = validationResult(req);
 
@@ -162,7 +153,6 @@ router.post("/updateScheduling", apiRateLimit, async (req, res) => {
         return res.status(400).json({
             msg: "Unsucessful scheduling update"
         })
-        next()
     }
 });
 

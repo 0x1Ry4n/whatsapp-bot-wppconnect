@@ -1,8 +1,9 @@
 const client = require("@wppconnect-team/wppconnect");
+const session_name = "teste"
 
 async function createSession() {
     return client.create({
-        session: "teste",
+        session: session_name,
         statusFind: (statusSession, session) => {
             console.log(`Session status: ${statusSession}`, `Session name: ${session}`)
         },
