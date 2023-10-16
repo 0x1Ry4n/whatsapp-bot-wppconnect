@@ -115,6 +115,20 @@ async function messageListener() {
                 return
             }
             case "2": {
+                const params = {
+                    id: data.id,
+                    agendado: true
+                }
+
+                const response = await axios.post(`${serverAddress}:${port}/api/schedulings/updateScheduling`, {}, {
+                    params: params,
+                    headers: {
+                        'Authorization': `${process.env.SECRET_TOKEN}`
+                    }
+                })
+
+                console.log(response);
+
                 await Promise.all([
                     sendMessage(client, clientFormattedPhone, clientMessages["2"]),
                     sendMessage(client, clientFormattedPhone, clientMessages["4"]),
