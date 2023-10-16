@@ -3,6 +3,7 @@ const { createClientMessage, createProfessionalMessage } = require("../helpers/c
 const axios = require("axios");
 const serverAddress = require("../config/serverAddress");
 const port = require("../config/port")
+const logger = require("../config/logger");
 
 const botClient = createSession()
 
@@ -11,12 +12,12 @@ async function sendMessage(client, target, message) {
         const response = await client.sendText(target, message);
 
         if (!response) {
-            throw new Error("Não foi possível enviar a mensagem");
+            throw new Error("Unable to send a message!");
         }
 
         return response;
     } catch (error) {
-        console.error(error);
+        logger.error(`Error to send message: ${error}`)
         throw error;
     }
 }
@@ -42,9 +43,30 @@ async function patientSender(data) {
 
         return true;
     } catch (error) {
-        console.log("Erro ao enviar as mensagens: ", error);
+        logger.error(`Error to send register scheduling messages: ${error}`)
         return false;
     }
+}
+
+
+async function filterSchedulings(params) {
+    const response = await axios.get(`${serverAddress}:${port}/api/schedulings/filterData`, {
+        params,
+        headers: {
+            'Authorization': `${process.env.SECRET_TOKEN}`
+        }
+    })
+
+    return response;
+}
+
+async function updateScheduling(params) {
+    await axios.post(`${serverAddress}:${port}/api/schedulings/updateScheduling`, {}, {
+        params: params,
+        headers: {
+            'Authorization': `${process.env.SECRET_TOKEN}`
+        }
+    })
 }
 
 async function messageListener() {
@@ -62,18 +84,11 @@ async function messageListener() {
             agendado: false
         }
 
-        const responseFiltered = await axios.get(`${serverAddress}:${port}/api/schedulings/filterData`, {
-            params,
-            headers: {
-                'Authorization': `${process.env.SECRET_TOKEN}`
-            }
-        })
+        const responseFiltered = filterSchedulings(params);
 
         if (!responseFiltered.data) {
             return
         }
-
-        console.log("Resposta do axios: ", responseFiltered.data);
 
         const data = responseFiltered.data?.data[0]
 
@@ -83,7 +98,7 @@ async function messageListener() {
         const clientFormattedPhone = data?.telefoneCliente
         const professionalFormattedPhone = data?.telefoneProfissional
 
-        console.log("Quem mandou mensagem: ", message.from)
+        logger.info(`Who sent message: ${message.from}`)
 
         switch (message.body.toString()) {
             case "0": {
@@ -91,23 +106,15 @@ async function messageListener() {
                 return
             }
             case "1": {
-                await sendMessage(client, professionalFormattedPhone, professionalMessages["1"]);
-
                 const params = {
                     id: data.id,
                     agendado: true
                 }
 
-                const response = await axios.post(`${serverAddress}:${port}/api/schedulings/updateScheduling`, {}, {
-                    params: params,
-                    headers: {
-                        'Authorization': `${process.env.SECRET_TOKEN}`
-                    }
-                })
-
-                console.log(response);
+                updateScheduling(params)
 
                 await Promise.all([
+                    sendMessage(client, professionalFormattedPhone, professionalMessages["1"]),
                     sendMessage(client, clientFormattedPhone, clientMessages["1"]),
                     sendMessage(client, clientFormattedPhone, clientMessages["3"]),
                 ])
@@ -120,14 +127,7 @@ async function messageListener() {
                     agendado: true
                 }
 
-                const response = await axios.post(`${serverAddress}:${port}/api/schedulings/updateScheduling`, {}, {
-                    params: params,
-                    headers: {
-                        'Authorization': `${process.env.SECRET_TOKEN}`
-                    }
-                })
-
-                console.log(response);
+                updateScheduling(params)
 
                 await Promise.all([
                     sendMessage(client, clientFormattedPhone, clientMessages["2"]),

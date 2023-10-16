@@ -4,16 +4,17 @@ const { validationResult } = require("express-validator")
 const { validateScheduling, validateUpdateScheduling } = require("../validators/validateReq");
 const { patientSender } = require("./messageController")
 const phoneFormatter = require("../helpers/formatPhoneNumber");
+const logger = require("../config/logger");
 const prisma = require("../config/mongoDb");
 const router = require("express").Router();
-
 
 router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res, next) => {
     try {
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
-            console.log(errors);
+            logger.error(errors);
+
             return res.status(422).json({
                 message: errors.mapped()
             })
@@ -34,22 +35,22 @@ router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res,
             data: {
                 nomeCliente: nomeCliente,
                 nomeProfissional: nomeProfissional,
-                telefoneCliente: phoneFormatter(telefoneCliente.replace("+", "")),
-                telefoneProfissional: phoneFormatter(telefoneProfissional.replace("+", "")),
+                telefoneCliente: phoneFormatter(telefoneCliente.replace(/\+/g, "")),
+                telefoneProfissional: phoneFormatter(telefoneProfissional.replace(/\+/g, "")),
                 tipoConsulta: tipoConsulta,
                 dataAgendamento: dateFormatted.toISOString(),
                 agendado: false
             }
         })
 
-        console.log(scheduling);
+        logger.info(scheduling)
 
         if (patientSender(scheduling)) {
             res.status(201).json(scheduling)
             return
         }
     } catch (error) {
-        console.log(error)
+        logger.error(error);
         return res.status(400).json({
             msg: "Unsucessful scheduling registration"
         })
@@ -77,8 +78,11 @@ router.get("/listSchedulings", checkAuth, apiRateLimit, async (req, res, next) =
             })
         }
 
-        return res.status(201).json(schedulings);
+        logger.info(schedulings);
+
+        return res.status(200).json(schedulings);
     } catch (error) {
+        logger.error(error);
         return res.status(400).json({
             msg: "Unsucessful scheduling fetch!"
         })
@@ -104,8 +108,6 @@ router.get("/filterData", checkAuth, apiRateLimit, async (req, res, next) => {
             },
         });
 
-        console.log(schedulings)
-
         if (!schedulings.length > 0) {
             res.status(204).json({
                 msg: "Response content is none"
@@ -113,11 +115,13 @@ router.get("/filterData", checkAuth, apiRateLimit, async (req, res, next) => {
             return
         }
 
+        logger.info(schedulings);
+
         return res.status(201).json({
             data: schedulings
         });
     } catch (error) {
-        console.log(error)
+        logger.error(error);
         return res.status(400).json({
             msg: "Error fetching scheduling"
         });
@@ -134,8 +138,6 @@ router.post("/updateScheduling", checkAuth, apiRateLimit, validateUpdateScheduli
             })
         }
 
-        console.log(req.query.id)
-
         const scheduling = await prisma.agendamento.update({
             where: {
                 id: req.query.id,
@@ -145,11 +147,11 @@ router.post("/updateScheduling", checkAuth, apiRateLimit, validateUpdateScheduli
             }
         })
 
-        console.log(scheduling);
+        logger.info(scheduling);
 
-        return res.status(201).json(scheduling)
+        return res.status(200).json(scheduling)
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         return res.status(400).json({
             msg: "Unsucessful scheduling update"
         })

@@ -15,8 +15,8 @@
     "@wppconnect-team/wppconnect": "^1.28.0",
     "axios": "^1.5.1",
     "dotenv": "^16.3.1",
-    "googleapis": "^126.0.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0"
   },
   "devDependencies": {
     "body-parser": "^1.20.2",
@@ -26,7 +26,6 @@
     "helmet": "^7.0.0",
     "nodemon": "^3.0.1",
     "prisma": "^5.4.2",
-    "puppeteer-cluster": "^0.23.0",
-    "uuid4": "^2.0.3"
+    "puppeteer-cluster": "^0.23.0"
   }
 }

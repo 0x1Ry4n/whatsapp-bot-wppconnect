@@ -5,6 +5,7 @@ const sheetsRoute = require("./controllers/databaseController");
 const http = require("http");
 const prisma = require("./config/mongoDb");
 const port = require("./config/port");
+const logger = require("./config/logger");
 const { messageListener } = require('./controllers/messageController');
 require("dotenv").config()
 
@@ -46,7 +47,7 @@ main()
         await messageListener()
     })
     .catch(async (error) => {
-        console.error(error)
+        logger.error(error);
         await prisma.$disconnect()
         process.exit(1)
     })
