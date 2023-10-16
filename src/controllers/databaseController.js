@@ -34,8 +34,8 @@ router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res,
             data: {
                 nomeCliente: nomeCliente,
                 nomeProfissional: nomeProfissional,
-                telefoneCliente: phoneFormatter(telefoneCliente),
-                telefoneProfissional: phoneFormatter(telefoneProfissional),
+                telefoneCliente: phoneFormatter(telefoneCliente.replace("+", "")),
+                telefoneProfissional: phoneFormatter(telefoneProfissional.replace("+", "")),
                 tipoConsulta: tipoConsulta,
                 dataAgendamento: dateFormatted.toISOString(),
                 agendado: false

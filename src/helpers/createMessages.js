@@ -1,3 +1,5 @@
+const { formatDateToPTBR } = require("./formatDate");
+
 const createClientMessage = (body) => {
     const messages = {
         "0": `
@@ -9,21 +11,26 @@ const createClientMessage = (body) => {
         `.split('\n').map(line => line.trim()).join('\n'),
         "1": `
         👋 Olá, Sr(a) ${body.nomeCliente}, bom te ver novamente!
-        O agendamento da sua consulta marcada para o dia ${body.dataAgendamento} tratando de ${body.tipoConsulta} 
+        O agendamento da sua consulta marcada para o dia ${formatDateToPTBR(body.dataAgendamento)}h tratando de ${body.tipoConsulta} 
         com o profissional ${body.nomeProfissional} foi confirmado! ✅.
         `.split('\n').map(line => line.trim()).join('\n'),
         "2": `
         👋 Olá, Sr(a) ${body.nomeCliente}, bom te ver novamente! 
         O agendamento da sua consulta marcada para o 
-        dia ${body.dataAgendamento} tratando de ${body.tipoConsulta} 
+        dia ${formatDateToPTBR(body.dataAgendamento)}h tratando de ${body.tipoConsulta} 
         com o profissional ${body.nomeProfissional} foi cancelado! ❌.
         `.split('\n').map(line => line.trim()).join('\n'),
         "3": `
         Verifique seu e-mail cadastrado para conferir se o profissional disponibilizou algum documento 
         a ser preenchido previamente à data do seu agendamento!
         Caso precise conversar com o profissional:
-        Link do contato do profissional: ${body.telefoneProfissional}
-        `.split('\n').map(line => line.trim()).join('\n')
+        ➡️ Telefone do profissional: ${body.telefoneProfissional.replace(/@c\.us/g, "")}
+        `.split('\n').map(line => line.trim()).join('\n'),
+        "4": `
+        Entre em contato com nosso suporte para reagendar ou cancelar a consulta
+        ➡️ Telefone do suporte: xxxxxxxxxxx
+        `.split('\n').map(line => line.trim()).join('\n'),
+
     }
 
     return messages;
@@ -34,7 +41,7 @@ const createProfessionalMessage = (body) => {
         "0": `
         👋 Olá, Sr(a) ${body.nomeProfissional}, você acabou de receber um novo agendamento!
         ---------------------------------------------
-        📅 Data do agendamento: ${body.dataAgendamento}
+        📅 Data do agendamento: ${formatDateToPTBR(body.dataAgendamento)}h
         ---------------------------------------------
         Você confirma a realização do agendamento?
         1️⃣ - Confirmar Agendamento
@@ -44,7 +51,7 @@ const createProfessionalMessage = (body) => {
         Certo, o seu agendamento foi confirmado!
         Estamos coletando informações com seu paciente.
         Caso precise combinar os detalhes do serviço com seu cliente:
-        Link do contato do paciente: ${body.telefoneCliente}
+        ➡️ Telefone do paciente: ${body.telefoneCliente.replace(/@c\.us/g, "")}
 
         Para ver novos agendamentos
         0️⃣ - Ver novos agendamentos

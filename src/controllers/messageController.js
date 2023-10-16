@@ -1,6 +1,7 @@
 const { createSession } = require("../config/client");
 const { createClientMessage, createProfessionalMessage } = require("../helpers/createMessages");
 const axios = require("axios");
+const serverAddress = require("../config/serverAddress");
 const port = require("../config/port")
 
 const botClient = createSession()
@@ -61,8 +62,7 @@ async function messageListener() {
             agendado: false
         }
 
-
-        const responseFiltered = await axios.get(`http://localhost:${port}/api/schedulings/filterData`, {
+        const responseFiltered = await axios.get(`${serverAddress}:${port}/api/schedulings/filterData`, {
             params,
             headers: {
                 'Authorization': `${process.env.SECRET_TOKEN}`
@@ -72,7 +72,6 @@ async function messageListener() {
         if (!responseFiltered.data) {
             return
         }
-
 
         console.log("Resposta do axios: ", responseFiltered.data);
 
@@ -99,7 +98,7 @@ async function messageListener() {
                     agendado: true
                 }
 
-                const response = await axios.post(`http://localhost:${port}/api/schedulings/updateScheduling`, {}, {
+                const response = await axios.post(`${serverAddress}:${port}/api/schedulings/updateScheduling`, {}, {
                     params: params,
                     headers: {
                         'Authorization': `${process.env.SECRET_TOKEN}`
@@ -118,7 +117,7 @@ async function messageListener() {
             case "2": {
                 await Promise.all([
                     sendMessage(client, clientFormattedPhone, clientMessages["2"]),
-                    sendMessage(client, clientFormattedPhone, clientMessages["3"]),
+                    sendMessage(client, clientFormattedPhone, clientMessages["4"]),
                 ])
 
                 return
