@@ -48,27 +48,6 @@ async function patientSender(data) {
     }
 }
 
-
-async function filterSchedulings(params) {
-    const response = await axios.get(`${serverAddress}:${port}/api/schedulings/filterData`, {
-        params,
-        headers: {
-            'Authorization': `${process.env.SECRET_TOKEN}`
-        }
-    })
-
-    return response;
-}
-
-async function updateScheduling(params) {
-    await axios.post(`${serverAddress}:${port}/api/schedulings/updateScheduling`, {}, {
-        params: params,
-        headers: {
-            'Authorization': `${process.env.SECRET_TOKEN}`
-        }
-    })
-}
-
 async function messageListener() {
     const client = await botClient;
 
@@ -84,7 +63,12 @@ async function messageListener() {
             agendado: false
         }
 
-        const responseFiltered = filterSchedulings(params);
+        const responseFiltered = await axios.get(`${serverAddress}:${port}/api/schedulings/filterData`, {
+            params,
+            headers: {
+                'Authorization': `${process.env.SECRET_TOKEN}`
+            }
+        })
 
         if (!responseFiltered.data) {
             return
@@ -98,8 +82,6 @@ async function messageListener() {
         const clientFormattedPhone = data?.telefoneCliente
         const professionalFormattedPhone = data?.telefoneProfissional
 
-        logger.info(`Who sent message: ${message.from}`)
-
         switch (message.body.toString()) {
             case "0": {
                 await sendMessage(client, professionalFormattedPhone, professionalMessages["0"]);
@@ -111,7 +93,12 @@ async function messageListener() {
                     agendado: true
                 }
 
-                updateScheduling(params)
+                await axios.post(`${serverAddress}:${port}/api/schedulings/updateScheduling`, {}, {
+                    params: params,
+                    headers: {
+                        'Authorization': `${process.env.SECRET_TOKEN}`
+                    }
+                })
 
                 await Promise.all([
                     sendMessage(client, professionalFormattedPhone, professionalMessages["1"]),
@@ -127,7 +114,12 @@ async function messageListener() {
                     agendado: true
                 }
 
-                updateScheduling(params)
+                await axios.post(`${serverAddress}:${port}/api/schedulings/updateScheduling`, {}, {
+                    params: params,
+                    headers: {
+                        'Authorization': `${process.env.SECRET_TOKEN}`
+                    }
+                })
 
                 await Promise.all([
                     sendMessage(client, clientFormattedPhone, clientMessages["2"]),
