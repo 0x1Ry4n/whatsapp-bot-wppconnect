@@ -27,8 +27,9 @@ const createClientMessage = (body) => {
         ➡️ Telefone do profissional: ${body.telefoneProfissional.replace(/@c\.us/g, "")}
         `.split('\n').map(line => line.trim()).join('\n'),
         "4": `
-        Entre em contato com nosso suporte para reagendar ou cancelar a consulta
-        ➡️ Telefone do suporte: xxxxxxxxxxx
+        O profissional ${body.nomeProfissional} ❌ cancelou o agendamento do paciente ${body.nomeCliente}
+        ➡️ Telefone do paciente: ${body.telefoneCliente.replace(/@c\.us/g, "")}
+        ➡️ Telefone do profissional: ${body.telefoneProfissional.replace(/@c\.us/g, "")}
         `.split('\n').map(line => line.trim()).join('\n'),
 
     }

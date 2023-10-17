@@ -123,7 +123,7 @@ async function messageListener() {
 
                 await Promise.all([
                     sendMessage(client, clientFormattedPhone, clientMessages["2"]),
-                    sendMessage(client, clientFormattedPhone, clientMessages["4"]),
+                    sendMessage(client, `${process.env.SUPPORT_PHONE_NUMBER}`, clientMessages["4"]),
                 ])
 
                 return

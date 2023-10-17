@@ -29,16 +29,18 @@ router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res,
             dataAgendamento
         } = req.body;
 
-        const dateFormatted = new Date(dataAgendamento)
+        const dateFormatted = new Date(dataAgendamento).toISOString()
+        const clientPhoneFormatted = phoneFormatter(telefoneCliente.replace(/\+/g, ""))
+        const professionalPhoneFormatted = phoneFormatter(telefoneProfissional.replace(/\+/g, ""))
 
         const scheduling = await prisma.agendamento.create({
             data: {
                 nomeCliente: nomeCliente,
                 nomeProfissional: nomeProfissional,
-                telefoneCliente: phoneFormatter(telefoneCliente.replace(/\+/g, "")),
-                telefoneProfissional: phoneFormatter(telefoneProfissional.replace(/\+/g, "")),
+                telefoneCliente: clientPhoneFormatted,
+                telefoneProfissional: professionalPhoneFormatted,
                 tipoConsulta: tipoConsulta,
-                dataAgendamento: dateFormatted.toISOString(),
+                dataAgendamento: dateFormatted,
                 agendado: false
             }
         })
@@ -117,7 +119,7 @@ router.get("/filterData", checkAuth, apiRateLimit, async (req, res, next) => {
 
         logger.info(schedulings);
 
-        return res.status(201).json({
+        return res.status(200).json({
             data: schedulings
         });
     } catch (error) {
