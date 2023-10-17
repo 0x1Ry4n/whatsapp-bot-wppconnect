@@ -8,7 +8,7 @@ const logger = require("../config/logger");
 const prisma = require("../config/mongoDb");
 const router = require("express").Router();
 
-router.post("/addScheduling", apiRateLimit, validateScheduling, async (req, res, next) => {
+router.post("/createScheduling", apiRateLimit, validateScheduling, async (req, res, next) => {
     try {
         const errors = validationResult(req);
 
@@ -91,7 +91,7 @@ router.get("/listSchedulings", checkAuth, apiRateLimit, async (req, res, next) =
     }
 });
 
-router.get("/filterData", checkAuth, apiRateLimit, async (req, res, next) => {
+router.get("/filterScheduling", checkAuth, apiRateLimit, async (req, res, next) => {
     try {
         const schedulings = await prisma.agendamento.findMany({
             where: {
@@ -130,7 +130,7 @@ router.get("/filterData", checkAuth, apiRateLimit, async (req, res, next) => {
     }
 });
 
-router.post("/updateScheduling", checkAuth, apiRateLimit, validateUpdateScheduling, async (req, res, next) => {
+router.post("/updateSchedulingStatus", checkAuth, apiRateLimit, validateUpdateScheduling, async (req, res, next) => {
     try {
         const errors = validationResult(req);
 

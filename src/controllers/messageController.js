@@ -63,7 +63,7 @@ async function messageListener() {
             agendado: false
         }
 
-        const responseFiltered = await axios.get(`${serverAddress}:${port}/api/schedulings/filterData`, {
+        const responseFiltered = await axios.get(`${serverAddress}:${port}/api/schedulings/filterScheduling`, {
             params,
             headers: {
                 'Authorization': `${process.env.SECRET_TOKEN}`
@@ -93,7 +93,7 @@ async function messageListener() {
                     agendado: true
                 }
 
-                await axios.post(`${serverAddress}:${port}/api/schedulings/updateScheduling`, {}, {
+                await axios.post(`${serverAddress}:${port}/api/schedulings/updateSchedulingStatus`, {}, {
                     params: params,
                     headers: {
                         'Authorization': `${process.env.SECRET_TOKEN}`
@@ -114,7 +114,7 @@ async function messageListener() {
                     agendado: true
                 }
 
-                await axios.post(`${serverAddress}:${port}/api/schedulings/updateScheduling`, {}, {
+                await axios.post(`${serverAddress}:${port}/api/schedulings/updateSchedulingStatus`, {}, {
                     params: params,
                     headers: {
                         'Authorization': `${process.env.SECRET_TOKEN}`

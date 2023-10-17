@@ -1,7 +1,7 @@
 const express = require('express')
 const helmet = require('helmet');
 const bodyParser = require('body-parser');
-const sheetsRoute = require("./controllers/databaseController");
+const schedulingRoutes = require("./controllers/databaseController");
 const http = require("http");
 const prisma = require("./config/mongoDb");
 const port = require("./config/port");
@@ -22,7 +22,7 @@ async function main() {
         res.send("Hello!")
     })
 
-    app.use("/api/schedulings", sheetsRoute);
+    app.use("/api/schedulings", schedulingRoutes);
 
     app.use('*', (req, res, next) => {
         res.status(404).json({
