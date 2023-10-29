@@ -1,12 +1,13 @@
 const express = require('express')
 const helmet = require('helmet');
 const bodyParser = require('body-parser');
-const schedulingRoutes = require("./controllers/databaseController");
+// const schedulingRoutes = require("./controllers/databaseController");
+const consultorioRoutes = require("./controllers/consultorioController");
 const http = require("http");
 const prisma = require("./config/mongoDb");
 const port = require("./config/port");
 const logger = require("./config/logger");
-const { messageListener } = require('./controllers/messageController');
+// const { messageListener } = require('./controllers/messageController');
 require("dotenv").config()
 
 const app = express()
@@ -22,7 +23,9 @@ async function main() {
         res.send("Hello!")
     })
 
-    app.use("/api/schedulings", schedulingRoutes);
+    // app.use("/api/schedulings", schedulingRoutes);
+    app.use("/api/webhook/schedulings", consultorioRoutes);
+
 
     app.use('*', (req, res, next) => {
         res.status(404).json({
@@ -44,7 +47,7 @@ async function main() {
 main()
     .then(async () => {
         await prisma.$connect()
-        await messageListener()
+        // await messageListener()
     })
     .catch(async (error) => {
         logger.error(error);

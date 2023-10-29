@@ -1,7 +1,7 @@
 const apiRateLimit = require("../middlewares/rateLimit");
 const checkAuth = require("../middlewares/checkAuth");
 const { validationResult } = require("express-validator")
-const { validateScheduling, validateUpdateScheduling } = require("../validators/validateReq");
+const { validateScheduling, validateUpdateScheduling } = require("../validators/schemas");
 const { patientSender } = require("./messageController")
 const phoneFormatter = require("../helpers/formatPhoneNumber");
 const logger = require("../config/logger");
