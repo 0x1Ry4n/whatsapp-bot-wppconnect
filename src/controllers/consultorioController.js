@@ -41,21 +41,24 @@ const criarAgenda = async ({ data, idPaciente, headers, auth }) => {
     const {
         telefone,
         email,
-        dataAgendamento,
+        dataAgendamentoInicio,
+	dataAgendamentoFim,
         status
     } = data;
 
     try {
-        const newDataAgendamento = new Date(dataAgendamento);
-        const associacaoPaciente = await associarPacienteConvenio({ data: { tipoConvenioDefault, idPaciente }, headers: headers, auth: auth });
+        const dataAgendamentoInicioFormatado = new Date(dataAgendamentoInicio.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
+        const dataAgendamentoFimFormatado = new Date(dataAgendamentoFim.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
+
+	const associacaoPaciente = await associarPacienteConvenio({ data: { tipoConvenioDefault, idPaciente }, headers: headers, auth: auth });
 
         const response = await axios.post(`${process.env.CONSULTORIO_API_ADDRESS}/agenda/novo`, {
             idPaciente: idPaciente,
             emailPaciente: email,
             telefoneCelularPaciente: telefone,
-            data: `${newDataAgendamento.getFullYear()}-${newDataAgendamento.getMonth()}-${newDataAgendamento.getDate()}`,
-            horaInicio: newDataAgendamento.toLocaleTimeString(),
-            horaFim: horaFimDefault,
+            data: `${dataAgendamentoInicioFormatado.getFullYear()}-${dataAgendamentoInicioFormatado.getMonth()}-${dataAgendamentoInicioFormatado.getDate()}`,
+            horaInicio: `${dataAgendamentoInicioFormatado.getHours()}:${dataAgendamentoInicioFormatado.getMinutes()}:00`,
+            horaFim: `${dataAgendamentoFimFormatado.getHours()}:${dataAgendamentoFimFormatado.getMinutes()}:00`,
             idTipoConsulta: tipoConsultaDefault,
             idLocalAgenda: localAgendaDefault,
             idPacienteConvenio: associacaoPaciente.id,
@@ -81,6 +84,7 @@ const criarPaciente = async ({ data, headers, auth }) => {
     const {
         nome,
         cpf,
+	dataNascimento,
         telefone,
         email
     } = data;
@@ -89,7 +93,7 @@ const criarPaciente = async ({ data, headers, auth }) => {
         const response = await axios.post(`${process.env.CONSULTORIO_API_ADDRESS}/paciente/novo`, {
             nome: nome,
             cpfcnpj: cpf,
-            dataNascimento: "1800-01-01",
+            dataNascimento: dataNascimento,
             sexo: "M",
             contato: {
                 email: email,
