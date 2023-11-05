@@ -20,12 +20,17 @@ const validateUpdateScheduling = [
 ]
 
 const validatePatientScheduling = [
-    body("nome").isString({ min: 2, max: 255 }),
-    body("cpf").isString({ max: 12 }),
-    body("telefone").isString({ min: 16 }),
-    body("email").isString({ max: 255 }),
-    body("dataAgendamento").isISO8601().optional(),
-    body("status").isString()
+    body("nomeCliente").isString({ min: 2, max: 255 }),
+    body("nomeProfissional").isString({ min: 2, max: 255 }),
+    body("cpfCliente").isString({ max: 12 }),
+    body("telefoneCliente").isString({ min: 16 }),
+    body("tipoConsulta").isString({ max: 75 }).optional(),
+    body("telefoneProfissional").isString({ max: 16 }),
+    body("emailCliente").isString({ max: 255 }),
+    body("dataAgendamentoInicio").isString({ max: 75 }),
+    body("dataAgendamentoFim").isString({ max: 75 }),
+    body("dataNascimento").isString({ max: 15 }).optional(),
+    body("status").isString({ max: 50 })
 ]
 
 module.exports = {

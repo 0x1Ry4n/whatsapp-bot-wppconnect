@@ -16,7 +16,7 @@ const associarPacienteConvenio = async ({ data, headers, auth }) => {
             headers,
             auth,
             params: {
-                idPaciente: idPaciente
+                idPaciente
             }
         });
 
@@ -25,7 +25,7 @@ const associarPacienteConvenio = async ({ data, headers, auth }) => {
         }
 
         const associar = await axios.post(`${process.env.CONSULTORIO_API_ADDRESS}/convenio-paciente/associar`, {
-            idPaciente: idPaciente,
+            idPaciente,
             idTipoConvenio: tipoConvenioDefault,
             dataValidade: dataValidadeDefault
         }, {
@@ -41,9 +41,13 @@ const associarPacienteConvenio = async ({ data, headers, auth }) => {
 
 const criarAgenda = async ({ data, idPaciente, headers, auth }) => {
     const {
+        nomeCliente,
+        nomeProfissional,
         telefoneCliente,
-        email,
+        telefoneProfissional,
+        tipoConsulta,
         dataAgendamentoInicio,
+        emailCliente,
         dataAgendamentoFim,
         status
     } = data;
@@ -51,9 +55,6 @@ const criarAgenda = async ({ data, idPaciente, headers, auth }) => {
     try {
         const dataAgendamentoInicioFormatado = new Date(dataAgendamentoInicio.toLocaleString('pt-BR'));
         const dataAgendamentoFimFormatado = new Date(dataAgendamentoFim.toLocaleString('pt-BR'));
-
-        // console.log(dataAgendamentoInicio, dataAgendamentoFim)
-        // console.log(dataAgendamentoInicioFormatado, dataAgendamentoFimFormatado)
 
         const associacaoPaciente = await associarPacienteConvenio({ data: { tipoConvenioDefault, idPaciente }, headers: headers, auth: auth });
 
@@ -63,7 +64,7 @@ const criarAgenda = async ({ data, idPaciente, headers, auth }) => {
 
         const response = await axios.post(`${process.env.CONSULTORIO_API_ADDRESS}/agenda/novo`, {
             idPaciente: idPaciente,
-            emailPaciente: email,
+            emailPaciente: emailCliente,
             telefoneCelularPaciente: telefoneCliente,
             data: `${dataAgendamentoInicioFormatado.getFullYear()}-${mesFormatado}-${dataAgendamentoInicioFormatado.getDate()}`,
             horaInicio: `${dataAgendamentoInicioFormatado.getHours()}:${dataAgendamentoInicioFormatado.getMinutes()}:00`,
@@ -81,6 +82,54 @@ const criarAgenda = async ({ data, idPaciente, headers, auth }) => {
         }, {
             headers,
             auth
+        })
+
+
+        const data = {
+            nomeCliente,
+            nomeProfissional,
+            telefoneCliente,
+            telefoneProfissional,
+            tipoConsulta,
+            dataAgendamentoInicio
+        }
+
+        await criarNotificacaoWhatsapp({
+            data: data
+        })
+
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const criarNotificacaoWhatsapp = async ({ data }) => {
+    try {
+        const {
+            nomeCliente,
+            nomeProfissional,
+            telefoneCliente,
+            telefoneProfissional,
+            tipoConsulta,
+            dataAgendamentoInicio
+        } = data;
+
+
+        const headers = {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate, br"
+        };
+
+        const response = await axios.post(`${serverAddress}:${port}/api/schedulings/createScheduling`, {
+            nomeCliente,
+            nomeProfissional,
+            telefoneCliente,
+            telefoneProfissional,
+            tipoConsulta,
+            dataAgendamento: dataAgendamentoInicio
+        }, {
+            headers
         });
 
         return response.data;
@@ -102,7 +151,7 @@ const criarPaciente = async ({ data, headers, auth }) => {
         const response = await axios.post(`${process.env.CONSULTORIO_API_ADDRESS}/paciente/novo`, {
             nome: nomeCliente,
             cpfcnpj: cpfCliente,
-            dataNascimento: dataNascimento,
+            dataNascimento,
             sexo: "M",
             contato: {
                 email: emailCliente,
@@ -121,50 +170,14 @@ const criarPaciente = async ({ data, headers, auth }) => {
             headers,
             auth
         });
-        a
+
+        logger.info(response)
+
         return response.data;
     } catch (error) {
         throw error;
     }
 };
-
-const criarNotificacaoWhtsapp = async ({ data }) => {
-    try {
-        const {
-            nomeCliente,
-            nomeProfissional,
-            telefoneCliente,
-            telefoneProfissional,
-            tipoConsulta,
-            dataAgendamentoInicio
-        } = data
-
-        const dataNotificacao = {
-            nomeCliente: nomeCliente,
-            nomeProfissional: nomeProfissional,
-            telefoneCliente: telefoneCliente,
-            telefoneProfissional: telefoneProfissional,
-            tipoConsulta: tipoConsulta,
-            dataAgendamento: dataAgendamentoInicio
-        };
-
-        const headers = {
-            "Accept": "application/json",
-            "Accept-Encoding": "gzip, deflate, br"
-        }
-
-        const response = await axios.post(`${serverAddress}:${port}/api/schedulings/createScheduling`, {
-            dataNotificacao
-        }, {
-            headers
-        })
-
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-
-}
 
 router.post("/createScheduling", apiRateLimit, validatePatientScheduling, async (req, res, next) => {
     try {
@@ -173,14 +186,14 @@ router.post("/createScheduling", apiRateLimit, validatePatientScheduling, async 
         if (!errors.isEmpty()) {
             logger.error(errors);
             return res.status(422).json({
-                message: errors.mapped()
+                message: errors.array()
             });
         }
 
         const { clientid, clientsecret, clinicanasnuvenscid } = req.headers;
 
         const headers = {
-            'clinicaNasNuvens-cid': clinicanasnuvenscid,
+            'clinicaNasNuvens-cid': clinicanasnuvenscid
         };
 
         const auth = {
@@ -189,7 +202,7 @@ router.post("/createScheduling", apiRateLimit, validatePatientScheduling, async 
         };
 
         const params = {
-            cpfCnpj: req.body.cpf
+            cpfCnpj: req.body.cpfCliente
         };
 
         const responseLista = await axios.get(`${process.env.CONSULTORIO_API_ADDRESS}/paciente/lista`, {
@@ -200,20 +213,17 @@ router.post("/createScheduling", apiRateLimit, validatePatientScheduling, async 
 
         if (responseLista.data.lista && responseLista.data.lista.length > 0) {
             const obj = responseLista.data.lista[0];
-            const agenda = await criarAgenda({ data: req.body, idPaciente: obj.id, headers: headers, auth: auth });
-            const response = criarNotificacaoWhtsapp({ data: req.body })
-            console.log(response, agenda)
-            res.status(200).json({ message: "Agenda criada. Notificação de whatsapp enviada!" });
+            const agenda = await criarAgenda({ data: req.body, idPaciente: obj.id, headers, auth });
+            logger.info(agenda)
+            res.status(200).json({ message: "Agenda criada. Notificação de WhatsApp enviada!" });
         } else {
-            const obj = await criarPaciente({ data: req.body, headers: headers, auth: auth });
-            const agenda = await criarAgenda({ data: req.body, idPaciente: obj.id, headers: headers, auth: auth });
-            const response = criarNotificacaoWhtsapp({ data: req.body })
-            console.log(response, agenda)
-            res.status(200).json({ message: "Paciente e agenda criados. Notificação de whatsapp enviada!" });
-
+            const obj = await criarPaciente({ data: req.body, headers, auth });
+            const agenda = await criarAgenda({ data: req.body, idPaciente: obj.id, headers, auth });
+            logger.info(agenda);
+            res.status(200).json({ message: "Paciente e agenda criados. Notificação de WhatsApp enviada!" });
         }
     } catch (error) {
-        console.log(error);
+        logger.error(error);
         res.status(500).json({ message: "Erro ao criar o paciente ou a agenda", error: error.response?.data || error.response });
     }
 });
