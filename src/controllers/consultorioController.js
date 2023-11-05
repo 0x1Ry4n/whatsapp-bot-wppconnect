@@ -5,6 +5,8 @@ const apiRateLimit = require("../middlewares/rateLimit");
 const logger = require("../config/logger");
 const axios = require("axios");
 const router = require("express").Router();
+const serverAddress = require("../config/serverAddress");
+const port = require("../config/port");
 
 const associarPacienteConvenio = async ({ data, headers, auth }) => {
     const { tipoConvenioDefault, idPaciente } = data;
@@ -39,24 +41,31 @@ const associarPacienteConvenio = async ({ data, headers, auth }) => {
 
 const criarAgenda = async ({ data, idPaciente, headers, auth }) => {
     const {
-        telefone,
+        telefoneCliente,
         email,
         dataAgendamentoInicio,
-	dataAgendamentoFim,
+        dataAgendamentoFim,
         status
     } = data;
 
     try {
-        const dataAgendamentoInicioFormatado = new Date(dataAgendamentoInicio.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
-        const dataAgendamentoFimFormatado = new Date(dataAgendamentoFim.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
+        const dataAgendamentoInicioFormatado = new Date(dataAgendamentoInicio.toLocaleString('pt-BR'));
+        const dataAgendamentoFimFormatado = new Date(dataAgendamentoFim.toLocaleString('pt-BR'));
 
-	const associacaoPaciente = await associarPacienteConvenio({ data: { tipoConvenioDefault, idPaciente }, headers: headers, auth: auth });
+        // console.log(dataAgendamentoInicio, dataAgendamentoFim)
+        // console.log(dataAgendamentoInicioFormatado, dataAgendamentoFimFormatado)
+
+        const associacaoPaciente = await associarPacienteConvenio({ data: { tipoConvenioDefault, idPaciente }, headers: headers, auth: auth });
+
+        const mes = dataAgendamentoInicioFormatado.getMonth() + 1
+        let mesFormatado = mes.toString()
+        mesFormatado = mesFormatado.length === 1 ? "0" + mesFormatado : mesFormatado;
 
         const response = await axios.post(`${process.env.CONSULTORIO_API_ADDRESS}/agenda/novo`, {
             idPaciente: idPaciente,
             emailPaciente: email,
-            telefoneCelularPaciente: telefone,
-            data: `${dataAgendamentoInicioFormatado.getFullYear()}-${dataAgendamentoInicioFormatado.getMonth()}-${dataAgendamentoInicioFormatado.getDate()}`,
+            telefoneCelularPaciente: telefoneCliente,
+            data: `${dataAgendamentoInicioFormatado.getFullYear()}-${mesFormatado}-${dataAgendamentoInicioFormatado.getDate()}`,
             horaInicio: `${dataAgendamentoInicioFormatado.getHours()}:${dataAgendamentoInicioFormatado.getMinutes()}:00`,
             horaFim: `${dataAgendamentoFimFormatado.getHours()}:${dataAgendamentoFimFormatado.getMinutes()}:00`,
             idTipoConsulta: tipoConsultaDefault,
@@ -82,22 +91,22 @@ const criarAgenda = async ({ data, idPaciente, headers, auth }) => {
 
 const criarPaciente = async ({ data, headers, auth }) => {
     const {
-        nome,
-        cpf,
-	dataNascimento,
-        telefone,
-        email
+        nomeCliente,
+        cpfCliente,
+        dataNascimento,
+        telefoneCliente,
+        emailCliente
     } = data;
 
     try {
         const response = await axios.post(`${process.env.CONSULTORIO_API_ADDRESS}/paciente/novo`, {
-            nome: nome,
-            cpfcnpj: cpf,
+            nome: nomeCliente,
+            cpfcnpj: cpfCliente,
             dataNascimento: dataNascimento,
             sexo: "M",
             contato: {
-                email: email,
-                telefoneCelular: telefone
+                email: emailCliente,
+                telefoneCelular: telefoneCliente
             },
             endereco: {
                 bairro: "",
@@ -112,12 +121,50 @@ const criarPaciente = async ({ data, headers, auth }) => {
             headers,
             auth
         });
-
+        a
         return response.data;
     } catch (error) {
         throw error;
     }
 };
+
+const criarNotificacaoWhtsapp = async ({ data }) => {
+    try {
+        const {
+            nomeCliente,
+            nomeProfissional,
+            telefoneCliente,
+            telefoneProfissional,
+            tipoConsulta,
+            dataAgendamentoInicio
+        } = data
+
+        const dataNotificacao = {
+            nomeCliente: nomeCliente,
+            nomeProfissional: nomeProfissional,
+            telefoneCliente: telefoneCliente,
+            telefoneProfissional: telefoneProfissional,
+            tipoConsulta: tipoConsulta,
+            dataAgendamento: dataAgendamentoInicio
+        };
+
+        const headers = {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip, deflate, br"
+        }
+
+        const response = await axios.post(`${serverAddress}:${port}/api/schedulings/createScheduling`, {
+            dataNotificacao
+        }, {
+            headers
+        })
+
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+
+}
 
 router.post("/createScheduling", apiRateLimit, validatePatientScheduling, async (req, res, next) => {
     try {
@@ -154,13 +201,16 @@ router.post("/createScheduling", apiRateLimit, validatePatientScheduling, async 
         if (responseLista.data.lista && responseLista.data.lista.length > 0) {
             const obj = responseLista.data.lista[0];
             const agenda = await criarAgenda({ data: req.body, idPaciente: obj.id, headers: headers, auth: auth });
-            console.log(agenda)
-            res.status(200).json({ message: "Agenda criada." });
+            const response = criarNotificacaoWhtsapp({ data: req.body })
+            console.log(response, agenda)
+            res.status(200).json({ message: "Agenda criada. Notificação de whatsapp enviada!" });
         } else {
             const obj = await criarPaciente({ data: req.body, headers: headers, auth: auth });
             const agenda = await criarAgenda({ data: req.body, idPaciente: obj.id, headers: headers, auth: auth });
-            console.log(agenda)
-            res.status(200).json({ message: "Paciente e agenda criados." });
+            const response = criarNotificacaoWhtsapp({ data: req.body })
+            console.log(response, agenda)
+            res.status(200).json({ message: "Paciente e agenda criados. Notificação de whatsapp enviada!" });
+
         }
     } catch (error) {
         console.log(error);
