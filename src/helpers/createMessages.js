@@ -7,16 +7,16 @@ const createClientMessage = (body) => {
         Eu sou a *Sô*, a *assistente virtual* da ${process.env.BOT_NAME}. 
         Venho comunicar que nós já recebemos a sua solicitação.
         No momento estamos aguardando a confirmação do profissional selecionado. 
-        Em alguns instantes o seu atendimento será processado.
+        Em alguns instantes o atendimento será realizado.
         `.split('\n').map(line => line.trim()).join('\n'),
         "1": `
         👋 Olá, Sr(a) ${body.nomeCliente}, bom te ver novamente!
-        O agendamento da sua consulta marcada para o dia ${formatDateToPTBR(body.dataAgendamento)}h tratando de ${body.tipoConsulta} 
+        O agendamento do seu serviço marcado para o dia ${formatDateToPTBR(body.dataAgendamento)}h tratando de ${body.tipoConsulta} 
         com o profissional ${body.nomeProfissional} foi confirmado! ✅.
         `.split('\n').map(line => line.trim()).join('\n'),
         "2": `
         👋 Olá, Sr(a) ${body.nomeCliente}, bom te ver novamente! 
-        O agendamento da sua consulta marcada para o 
+        O agendamento do seu serviço marcado para o 
         dia ${formatDateToPTBR(body.dataAgendamento)}h tratando de ${body.tipoConsulta} 
         com o profissional ${body.nomeProfissional} foi cancelado! ❌.
         `.split('\n').map(line => line.trim()).join('\n'),
@@ -27,8 +27,8 @@ const createClientMessage = (body) => {
         ➡️ Telefone do profissional: ${body.telefoneProfissional.replace(/@c\.us/g, "")}
         `.split('\n').map(line => line.trim()).join('\n'),
         "4": `
-        O profissional ${body.nomeProfissional} ❌ cancelou o agendamento do paciente ${body.nomeCliente}
-        ➡️ Telefone do paciente: ${body.telefoneCliente.replace(/@c\.us/g, "")}
+        O profissional ${body.nomeProfissional} ❌ cancelou o agendamento do cliente ${body.nomeCliente}
+        ➡️ Telefone do cliente: ${body.telefoneCliente.replace(/@c\.us/g, "")}
         ➡️ Telefone do profissional: ${body.telefoneProfissional.replace(/@c\.us/g, "")}
         `.split('\n').map(line => line.trim()).join('\n'),
 
