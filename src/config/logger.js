@@ -4,8 +4,9 @@ const colorizer = winston.format.colorize();
 const logger = winston.createLogger({
     level: 'debug',
     format: winston.format.combine(
+        winston.format.prettyPrint(),
+        winston.format.splat(),
         winston.format.timestamp(),
-        winston.format.simple(),
         winston.format.printf(msg => {
             if (typeof msg.message === 'object') {
                 msg.message = JSON.stringify(msg.message, null, 2);

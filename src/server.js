@@ -1,13 +1,14 @@
-const express = require('express')
-const helmet = require('helmet');
-const bodyParser = require('body-parser');
-const schedulingRoutes = require("./controllers/databaseController");
-const consultorioRoutes = require("./controllers/consultorioController");
+const express = require("express");
+const helmet = require("helmet");
+const bodyParser = require("body-parser");
 const http = require("http");
 const prisma = require("./config/mongoDb");
+const databaseRoutes = require("./routes/databaseAgendamento.route");
+const consultorioRoutes = require("./routes/consultorioapi.route");
+const WhatsappBotController = require("./controllers/messageController");
 const port = require("./config/port");
 const logger = require("./config/logger");
-const { messageListener } = require('./controllers/messageController');
+
 require("dotenv").config()
 
 const app = express()
@@ -23,7 +24,7 @@ async function main() {
         res.send("Hello!")
     })
 
-    app.use("/api/schedulings", schedulingRoutes);
+    app.use("/api/schedulings", databaseRoutes);
     app.use("/api/webhook/schedulings", consultorioRoutes);
 
 
@@ -47,7 +48,7 @@ async function main() {
 main()
     .then(async () => {
         await prisma.$connect()
-        await messageListener()
+        await WhatsappBotController.messageListener()
     })
     .catch(async (error) => {
         logger.error(error);

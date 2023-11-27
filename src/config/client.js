@@ -1,14 +1,14 @@
 const client = require("@wppconnect-team/wppconnect");
-const session_name = "teste"
+const logger = require("./logger")
 
-async function createSession() {
+async function createSession(session_name) {
     return client.create({
         session: session_name,
         statusFind: (statusSession, session) => {
-            console.log(`Session status: ${statusSession}`, `Session name: ${session}`)
+            logger.info(`Session status: ${statusSession}`, `Session name: ${session}`)
         },
         catchQR: (base64Qr, asciiQR) => {
-            console.log(asciiQR);
+            logger.info(asciiQR);
 
             let matches = base64Qr.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/),
                 response = {};
@@ -27,7 +27,7 @@ async function createSession() {
                 'binary',
                 function (err) {
                     if (err != null) {
-                        console.log(err);
+                        logger.error(err);
                     }
                 }
             );
