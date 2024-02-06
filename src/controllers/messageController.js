@@ -122,7 +122,7 @@ class WhatsappBotController {
 
                     await Promise.all([
                         WhatsappBotController.sendMessage(client, clientFormattedPhone, clientMessages["2"]),
-                        WhatsappBotController.sendMessage(client, `${process.env.SUPPORT_PHONE_NUMBER}`, clientMessages["4"]),
+                        // WhatsappBotController.sendMessage(client, `${process.env.SUPPORT_PHONE_NUMBER}`, clientMessages["4"]),
                     ])
 
                     return

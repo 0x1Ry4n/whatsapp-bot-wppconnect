@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const http = require("http");
 const prisma = require("./config/mongoDb");
 const databaseRoutes = require("./routes/databaseAgendamento.route");
-const consultorioRoutes = require("./routes/consultorioapi.route");
+const consultorioRoutes = require("./routes/consultorioApi.route");
 const WhatsappBotController = require("./controllers/messageController");
 const port = require("./config/port");
 const logger = require("./config/logger");
@@ -26,7 +26,6 @@ async function main() {
 
     app.use("/api/schedulings", databaseRoutes);
     app.use("/api/webhook/schedulings", consultorioRoutes);
-
 
     app.use('*', (req, res, next) => {
         res.status(404).json({

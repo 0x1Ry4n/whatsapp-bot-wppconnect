@@ -10,15 +10,28 @@ const createClientMessage = (body) => {
         Em alguns instantes o atendimento será realizado.
         `.split('\n').map(line => line.trim()).join('\n'),
         "1": `
-        👋 Olá, Sr(a) ${body.nomeCliente}, bom te ver novamente!
+        ✅ Agendamento Confirmado. 
+        Olá, Sr(a) ${body.nomeCliente}, bom te ver novamente!
         O agendamento do seu serviço marcado para o dia ${formatDateToPTBR(body.dataAgendamento)}h tratando de ${body.tipoConsulta} 
-        com o profissional ${body.nomeProfissional} foi confirmado! ✅.
+        com o profissional ${body.nomeProfissional} foi confirmado!
+        
+        👋 Até mais! 
         `.split('\n').map(line => line.trim()).join('\n'),
         "2": `
-        👋 Olá, Sr(a) ${body.nomeCliente}, bom te ver novamente! 
-        O agendamento do seu serviço marcado para o 
-        dia ${formatDateToPTBR(body.dataAgendamento)}h tratando de ${body.tipoConsulta} 
-        com o profissional ${body.nomeProfissional} foi cancelado! ❌.
+        ❌ Agendamento Cancelado.
+        Olá, Sr(a) ${body.nomeCliente}. 
+        Infelizmente o profissional ${body.nomeProfissional} não pode confirmar 
+        o agendamento na data ${formatDateToPTBR(body.dataAgendamento)}h tratando de ${body.tipoConsulta}  
+        por algum motivo. Você pode escolher uma nova data dentro do seu perfil
+        cadastrado na nossa plataforma através do link a seguir: 
+        
+        Link...  
+
+        Você também pode entrar em contato diretamente com a clínica através do número a seguir
+
+        Telefone da clinica...
+
+        👋 Até mais! 
         `.split('\n').map(line => line.trim()).join('\n'),
         "3": `
         Verifique seu e-mail cadastrado para conferir se o profissional disponibilizou algum documento 
@@ -31,7 +44,6 @@ const createClientMessage = (body) => {
         ➡️ Telefone do cliente: ${body.telefoneCliente.replace(/@c\.us/g, "")}
         ➡️ Telefone do profissional: ${body.telefoneProfissional.replace(/@c\.us/g, "")}
         `.split('\n').map(line => line.trim()).join('\n'),
-
     }
 
     return messages;
