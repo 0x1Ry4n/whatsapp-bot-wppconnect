@@ -1,162 +1,186 @@
-const { validationResult } = require("express-validator")
-const WhatsappBotController = require("./messageController")
+const { validationResult } = require("express-validator");
+const WhatsappBotController = require("./messageController");
 const phoneFormatter = require("../helpers/formatPhoneNumber");
 const prisma = require("../config/mongoDb");
 const logger = require("../config/logger");
 
 class DatabaseController {
-    static async criarAgendamento(req, res, next) {
-        try {
-            const errors = validationResult(req);
+  static async criarAgendamento(req, res, next) {
+    try {
+      const errors = validationResult(req);
 
-            if (!errors.isEmpty()) {
-                logger.error(errors);
+      if (!errors.isEmpty()) {
+        logger.error(errors);
 
-                res.status(422).json({
-                    message: errors.mapped()
-                })
-            }
+        res.status(422).json({
+          success: false,
+          message: errors.mapped(),
+        });
+      }
 
-            const {
-                nomeCliente,
-                nomeProfissional,
-                telefoneCliente,
-                telefoneProfissional,
-                tipoConsulta,
-                dataAgendamento
-            } = req.body;
+      const status = req.body?.status;
 
-            const dateFormatted = new Date(dataAgendamento).toISOString()
-            const clientPhoneFormatted = phoneFormatter(telefoneCliente.replace(/\+/g, ""))
-            const professionalPhoneFormatted = phoneFormatter(telefoneProfissional.replace(/\+/g, ""))
+      if (
+        status === "APROVADO" ||
+        status === "CANCELADO" ||
+        status === "REAGENDADO"
+      ) {
+        if (WhatsappBotController.statusSender({ ...req.body, status })) {
+          const msg = `Status webhook sended: ${status}`;
 
-            const scheduling = await prisma.agendamento.create({
-                data: {
-                    nomeCliente: nomeCliente,
-                    nomeProfissional: nomeProfissional,
-                    telefoneCliente: clientPhoneFormatted,
-                    telefoneProfissional: professionalPhoneFormatted,
-                    tipoConsulta: tipoConsulta,
-                    dataAgendamento: dateFormatted,
-                    agendado: false
-                }
-            })
+          logger.info(msg);
 
-            logger.info(scheduling)
+          res.status(200).json({
+            success: true,
+            message: msg,
+          });
 
-            if (WhatsappBotController.patientSender(scheduling)) {
-                res.status(201).json(scheduling)
-                return
-            }
-        } catch (error) {
-            logger.error(error);
-            res.status(400).json({
-                msg: "Unsucessful scheduling registration"
-            })
+          return;
         }
-    };
+      } else {
+        const {
+          nomeCliente,
+          nomeProfissional,
+          telefoneCliente,
+          telefoneProfissional,
+          telefoneClinica,
+          tipoConsulta,
+          dataAgendamento,
+        } = req.body;
 
-    static async listarAgendamentos(req, res, next) {
-        try {
-            const schedulings = await prisma.agendamento.findMany({
-                select: {
-                    id: true,
-                    nomeCliente: true,
-                    nomeProfissional: true,
-                    telefoneCliente: true,
-                    telefoneProfissional: true,
-                    tipoConsulta: true,
-                    dataAgendamento: true,
-                    agendado: true
-                }
-            })
+        const dateFormatted = new Date(dataAgendamento).toISOString();
+        const clientPhoneFormatted = phoneFormatter(
+          telefoneCliente.replace(/\+/g, "")
+        );
+        const professionalPhoneFormatted = phoneFormatter(
+          telefoneProfissional.replace(/\+/g, "")
+        );
 
-            if (!schedulings.length > 0) {
-                res.status(204).json({
-                    msg: "Response content is none"
-                })
-            }
+        const clinicaPhoneFormatted = phoneFormatter(
+          telefoneClinica.replace(/\+/g, "")
+        );
 
-            logger.info(schedulings);
+        const scheduling = await prisma.agendamento.create({
+          data: {
+            nomeCliente: nomeCliente,
+            nomeProfissional: nomeProfissional,
+            telefoneCliente: clientPhoneFormatted,
+            telefoneProfissional: professionalPhoneFormatted,
+            telefoneClinica: clinicaPhoneFormatted,
+            tipoConsulta: tipoConsulta,
+            dataAgendamento: dateFormatted,
+            agendado: false,
+          },
+        });
 
-            res.status(200).json(schedulings);
-        } catch (error) {
-            logger.error(error);
-            res.status(400).json({
-                msg: "Unsucessful scheduling fetch!"
-            })
+        logger.info(scheduling);
+
+        if (WhatsappBotController.patientSender(scheduling)) {
+          res.status(201).json({
+            success: true,
+            data: scheduling,
+          });
+          return;
         }
-    };
+      }
+    } catch (error) {
+      logger.error(error);
+      res.status(400).json({
+        success: false,
+        message: "Não foi possível criar o agendamento!",
+      });
+    }
+  }
 
-    static async filtrarAgendamentos(req, res, next) {
-        try {
-            const schedulings = await prisma.agendamento.findMany({
-                where: {
-                    telefoneProfissional: req.query.telefoneProfissional,
-                    agendado: req.query.agendado === "true" ? true : false
-                },
-                select: {
-                    id: true,
-                    nomeCliente: true,
-                    nomeProfissional: true,
-                    telefoneCliente: true,
-                    telefoneProfissional: true,
-                    tipoConsulta: true,
-                    dataAgendamento: true,
-                    agendado: true
-                },
-            });
+  static async listarAgendamentos(req, res, next) {
+    try {
+      const schedulings = await prisma.agendamento.findMany({});
 
-            if (!schedulings.length > 0) {
-                res.status(204).json({
-                    msg: "Response content is none"
-                })
-                return
-            }
+      if (!schedulings) {
+        res.status(204).json({
+          success: false,
+          data: null,
+        });
+      }
 
-            logger.info(schedulings);
+      logger.info(schedulings);
 
-            res.status(200).json({
-                data: schedulings
-            });
-        } catch (error) {
-            logger.error(error);
-            res.status(400).json({
-                msg: "Error fetching scheduling"
-            });
-        }
-    };
+      res.status(200).json(schedulings);
+    } catch (error) {
+      logger.error(error);
+      res.status(400).json({
+        success: false,
+        message: "Não foi possível listar o agendamento!",
+      });
+    }
+  }
 
-    static async atualizarStatusAgendamento(req, res, next) {
-        try {
-            const errors = validationResult(req);
+  static async filtrarAgendamentos(req, res, next) {
+    try {
+      const schedulings = await prisma.agendamento.findMany({
+        where: {
+          telefoneProfissional: req.query.telefoneProfissional,
+          agendado: req.query.agendado === "true" ? true : false,
+        },
+      });
 
-            if (!errors.isEmpty()) {
-                res.status(422).json({
-                    message: errors.mapped()
-                })
-            }
+      if (!schedulings) {
+        res.status(204).json({
+          success: false,
+          data: null,
+        });
+        return;
+      }
 
-            const scheduling = await prisma.agendamento.update({
-                where: {
-                    id: req.query.id,
-                },
-                data: {
-                    agendado: req.query.agendado === "true" ? true : false
-                }
-            })
+      logger.info(schedulings);
 
-            logger.info(scheduling);
+      res.status(200).json({
+        success: true,
+        data: schedulings,
+      });
+    } catch (error) {
+      logger.error(error);
+      res.status(400).json({
+        success: false,
+        message: "Não foi possível filtrar o agendamentos!",
+      });
+    }
+  }
 
-            res.status(200).json(scheduling)
-        } catch (error) {
-            logger.error(error);
-            res.status(400).json({
-                msg: "Unsucessful scheduling update"
-            })
-        }
-    };
+  static async atualizarStatusAgendamento(req, res, next) {
+    try {
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        res.status(422).json({
+          success: false,
+          message: errors.mapped(),
+        });
+      }
+
+      const scheduling = await prisma.agendamento.update({
+        where: {
+          id: req.query.id,
+        },
+        data: {
+          agendado: req.query.agendado === "true" ? true : false,
+        },
+      });
+
+      logger.info(scheduling);
+
+      res.status(200).json({
+        success: true,
+        data: scheduling,
+      });
+    } catch (error) {
+      logger.error(error);
+      res.status(400).json({
+        success: false,
+        message: "Não foi possível atualizar o agendamento!",
+      });
+    }
+  }
 }
-
 
 module.exports = DatabaseController;
