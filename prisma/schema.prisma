@@ -16,7 +16,7 @@ model Agendamento {
   nomeProfissional     String
   telefoneCliente      String
   telefoneProfissional String
-  telefoneClinica      String
+  telefoneClinica      String?
   tipoConsulta         String
   dataAgendamento      DateTime
   agendado             Boolean  @default(false)
