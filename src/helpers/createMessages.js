@@ -14,7 +14,7 @@ const createClientMessage = (bodyMessage) => {
 
   const messages = {
     0: `
-        👋 Olá, Sr(a) ${!nomeCliente}. 
+        👋 Olá, Sr(a) ${nomeCliente}. 
         Eu sou a *Sô*, a *assistente virtual* da ${process.env.BOT_NAME}. 
         Venho comunicar que nós já recebemos a sua solicitação.
         No momento estamos aguardando a confirmação do profissional selecionado. 
@@ -72,7 +72,7 @@ const createClientMessage = (bodyMessage) => {
       .map((line) => line.trim())
       .join("\n"), // suporte
     5: `
-        Olá ${nomeCliente}.
+        Olá!
 
         Gostaríamos de informar que houve uma alteração no seu agendamento
         ${tipoConsulta} com o profissional ${nomeProfissional}.
