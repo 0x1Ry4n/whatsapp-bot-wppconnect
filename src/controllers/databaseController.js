@@ -12,82 +12,78 @@ class DatabaseController {
       if (!errors.isEmpty()) {
         logger.error(errors);
 
-        res.status(422).json({
+        return res.status(422).json({
           success: false,
           message: errors.mapped(),
         });
       }
 
+      const {
+        nomeCliente,
+        nomeProfissional,
+        telefoneCliente,
+        telefoneProfissional,
+        telefoneClinica,
+        tipoConsulta,
+        dataAgendamento,
+      } = req.body;
+
+      const clientPhoneFormatted = phoneFormatter(telefoneCliente.replace(/\+/g, ""));
+      const professionalPhoneFormatted = phoneFormatter(telefoneProfissional.replace(/\+/g, ""));
+      const clinicaPhoneFormatted = phoneFormatter(telefoneClinica.replace(/\+/g, ""));
+      const dateFormatted = new Date(dataAgendamento).toISOString();
       const status = req.body?.status;
 
-      if (
-        status === "APROVADO" ||
-        status === "CANCELADO" ||
-        status === "REAGENDADO"
-      ) {
-        if (WhatsappBotController.statusSender({ ...req.body, status })) {
+      if (status) {
+        if (
+          WhatsappBotController.statusSender({ 
+            nomeCliente, 
+            nomeProfissional, 
+            telefoneProfissional: professionalPhoneFormatted, 
+            telefoneCliente: clientPhoneFormatted, 
+            telefoneClinica: clinicaPhoneFormatted,
+            tipoConsulta, 
+            dataAgendamento, 
+            status 
+          })
+        ) {
           const msg = `Status webhook sended: ${status}`;
 
           logger.info(msg);
 
-          res.status(200).json({
+          return res.status(200).json({
             success: true,
             message: msg,
           });
-
-          return;
         }
-      } else {
-        const {
-          nomeCliente,
-          nomeProfissional,
-          telefoneCliente,
-          telefoneProfissional,
-          telefoneClinica,
-          tipoConsulta,
-          dataAgendamento,
-        } = req.body;
+      } 
+    
+      const scheduling = await prisma.agendamento.create({
+        data: {
+          nomeCliente: nomeCliente,
+          nomeProfissional: nomeProfissional,
+          telefoneCliente: clientPhoneFormatted,
+          telefoneProfissional: professionalPhoneFormatted,
+          telefoneClinica: clinicaPhoneFormatted,
+          tipoConsulta: tipoConsulta,
+          dataAgendamento: dateFormatted,
+          agendado: false,
+        },
+      });
 
-        const dateFormatted = new Date(dataAgendamento).toISOString();
-        const clientPhoneFormatted = phoneFormatter(
-          telefoneCliente.replace(/\+/g, "")
-        );
-        const professionalPhoneFormatted = phoneFormatter(
-          telefoneProfissional.replace(/\+/g, "")
-        );
+      logger.info(scheduling);
 
-        const clinicaPhoneFormatted = phoneFormatter(
-          telefoneClinica.replace(/\+/g, "")
-        );
-
-        const scheduling = await prisma.agendamento.create({
-          data: {
-            nomeCliente: nomeCliente,
-            nomeProfissional: nomeProfissional,
-            telefoneCliente: clientPhoneFormatted,
-            telefoneProfissional: professionalPhoneFormatted,
-            telefoneClinica: clinicaPhoneFormatted,
-            tipoConsulta: tipoConsulta,
-            dataAgendamento: dateFormatted,
-            agendado: false,
-          },
+      if (WhatsappBotController.patientSender(scheduling)) {
+        return res.status(200).json({
+          success: true,
+          data: scheduling,
         });
-
-        logger.info(scheduling);
-
-        if (WhatsappBotController.patientSender(scheduling)) {
-          res.status(201).json({
-            success: true,
-            data: scheduling,
-          });
-          return;
-        }
       }
     } catch (error) {
       logger.error(error);
-      res.status(400).json({
+      return res.status(500).json({
         success: false,
-        message: "Não foi possível criar o agendamento!",
+        message: error,
       });
     }
   }
@@ -108,9 +104,9 @@ class DatabaseController {
       res.status(200).json(schedulings);
     } catch (error) {
       logger.error(error);
-      res.status(400).json({
+      res.status(500).json({
         success: false,
-        message: "Não foi possível listar o agendamento!",
+        message: error,
       });
     }
   }
@@ -125,24 +121,23 @@ class DatabaseController {
       });
 
       if (!schedulings) {
-        res.status(204).json({
+        return res.status(204).json({
           success: false,
           data: null,
         });
-        return;
       }
 
       logger.info(schedulings);
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: schedulings,
       });
     } catch (error) {
       logger.error(error);
-      res.status(400).json({
+      return res.status(500).json({
         success: false,
-        message: "Não foi possível filtrar o agendamentos!",
+        message: error
       });
     }
   }
@@ -152,7 +147,7 @@ class DatabaseController {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        res.status(422).json({
+        return res.status(422).json({
           success: false,
           message: errors.mapped(),
         });
@@ -169,15 +164,15 @@ class DatabaseController {
 
       logger.info(scheduling);
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: scheduling,
       });
     } catch (error) {
       logger.error(error);
-      res.status(400).json({
+      return res.status(500).json({
         success: false,
-        message: "Não foi possível atualizar o agendamento!",
+        message: error,
       });
     }
   }

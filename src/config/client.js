@@ -1,4 +1,5 @@
 const client = require("@wppconnect-team/wppconnect");
+const fs = require("fs");
 const logger = require("./logger")
 
 async function createSession(session_name) {
@@ -10,8 +11,8 @@ async function createSession(session_name) {
         catchQR: (base64Qr, asciiQR) => {
             logger.info(asciiQR);
 
-            let matches = base64Qr.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/),
-                response = {};
+            let matches = base64Qr.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+            let response = {};
 
             if (matches.length !== 3) {
                 return new Error('Invalid input string');
@@ -21,11 +22,11 @@ async function createSession(session_name) {
             response.data = new Buffer.from(matches[2], 'base64');
 
             let imageBuffer = response;
-            require('fs').writeFile(
+            fs.writeFile(
                 'src/assets/images/out.png',
                 imageBuffer['data'],
                 'binary',
-                function (err) {
+                (err) => {
                     if (err != null) {
                         logger.error(err);
                     }

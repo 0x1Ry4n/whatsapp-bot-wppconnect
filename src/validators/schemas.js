@@ -8,7 +8,7 @@ const validateScheduling = [
   body("telefoneClinica").isString({ max: 75 }).exists(),
   body("tipoConsulta").isString({ max: 75 }).exists(),
   body("dataAgendamento").isISO8601().exists(),
-  body("status").isString().optional(),
+  body("status").isString().isIn(["ALTERADO", "APROVADO", "CANCELADO", "REAGENDADO"]).optional(),
 ];
 
 const validateUpdateScheduling = [

@@ -82,7 +82,7 @@ const createClientMessage = (bodyMessage) => {
         Por favor, revise suas informações de agendamento. Se houver alguma dúvida
         ou necessidade de reagendamento, você pode realizar todo o gerenciamento através
         da sua área do cliente entrando com seu login e senha. Você também pode entrar em 
-        contato diretamente com o profissional através do telefone ${telefoneProfissional}
+        contato diretamente com o profissional através do telefone ${telefoneProfissional.replace(/@.*$/, "")}
 
         Atenciosamente, equipe ON Saúde
         `

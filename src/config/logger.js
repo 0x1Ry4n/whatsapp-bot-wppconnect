@@ -1,20 +1,16 @@
 const winston = require("winston");
-const colorizer = winston.format.colorize();
 
 const logger = winston.createLogger({
     level: 'debug',
     format: winston.format.combine(
-        winston.format.prettyPrint(),
-        winston.format.splat(),
-        winston.format.timestamp(),
-        winston.format.printf(msg => {
-            if (typeof msg.message === 'object') {
-                msg.message = JSON.stringify(msg.message, null, 2);
-            }
-            return colorizer.colorize(msg.level, `${msg.timestamp} - ${msg.level}: ${msg.message}`)
-        })
+        winston.format.colorize({ all: true }),
+        winston.format.timestamp({
+          format: 'YYYY-MM-DD hh:mm:ss.SSS A',
+        }),
+        winston.format.align(),
+        winston.format.printf((info) => `[${info.timestamp}] ${info.level}: ${info.message}`)
     ),
     transports: [new winston.transports.Console()],
-})
+});
 
 module.exports = logger;

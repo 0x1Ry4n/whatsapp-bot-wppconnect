@@ -1,21 +1,17 @@
 const { createSession } = require("../config/client");
 const { localInstance } = require("../config/axiosInstance");
-const {
-  createClientMessage,
-  createProfessionalMessage,
-} = require("../helpers/createMessages");
+const { createClientMessage, createProfessionalMessage } = require("../helpers/createMessages");
 const logger = require("../config/logger");
 
-const botClient = createSession("teste");
+const botClient = createSession("production");
 
 class WhatsappBotController {
   static async sendMessage(client, target, message) {
     try {
       const messageResponse = await client.sendText(target, message);
 
-      if (!messageResponse) {
-        throw new Error("Unable to send a message!");
-      }
+      if (!messageResponse) throw new Error("Unable to send a message!");
+      
 
       return messageResponse;
     } catch (error) {
